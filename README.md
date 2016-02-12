@@ -15,13 +15,20 @@ let headers: [Header] = [
 
 let encoder = hpack.Encoder()
 let bytes = try encoder.encode(headers)
+
+print(bytes)
 ```
 
 ### Decoding a set of headers
 
 ```swift
-let bytes: [UInt8] = []
+let bytes: [UInt8] = [130]
 
 let decoder = hpack.Decoder()
 let headers = try decoder.decode(bytes)
+
+for header in headers {
+  print(header.name)
+  print(header.value)
+}
 ```
