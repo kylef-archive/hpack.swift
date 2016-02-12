@@ -1,10 +1,19 @@
 import Spectre
-import hpack
+@testable import hpack
 
 
 func testDecoder() {
   describe("HPACK Decoder") {
     let decoder = Decoder()
+
+    $0.it("can decode indexed header field") {
+      let data: [UInt8] = [130]
+
+      let headers = try decoder.decode(data)
+      try expect(headers.count) == 1
+      try expect(headers[0].name) == ":method"
+      try expect(headers[0].value) == "GET"
+    }
 
     $0.it("can decode un-indexed literal header field without indexing") {
       let data: [UInt8] = [
@@ -19,6 +28,35 @@ func testDecoder() {
       try expect(headers.count) == 1
       try expect(headers[0].name) == "password"
       try expect(headers[0].value) == "secret"
+    }
+  }
+
+  // Decoding tests from HPACK Specification
+  describe("Decoding Integer") {
+    $0.it("can decode 10 with 5-bit prefix") {
+      let value = try decodeInt([10], prefixBits: 5)
+      try expect(value.value) == 10
+      try expect(value.consumed) == 1
+    }
+
+    $0.it("can decode 1337 with 5-bit prefix") {
+      let value = try decodeInt([31, 154, 10], prefixBits: 5)
+      try expect(value.value) == 1337
+      try expect(value.consumed) == 3
+    }
+
+    $0.it("can decode 42 with 8-bit prefix") {
+      let value = try decodeInt([42], prefixBits: 8)
+      try expect(value.value) == 42
+      try expect(value.consumed) == 1
+    }
+
+    $0.it("fails to decode empty bytes") {
+      try expect(try decodeInt([], prefixBits: 8)).toThrow()
+    }
+
+    $0.it("fails with insufficient data") {
+      try expect(try decodeInt([31], prefixBits: 5)).toThrow()
     }
   }
 }

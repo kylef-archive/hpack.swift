@@ -1,10 +1,3 @@
-#if os(Linux)
-import Glibc
-#else
-import Darwin
-#endif
-
-
 public class Encoder {
   public let headerTable: HeaderTable
 
@@ -47,14 +40,7 @@ public class Encoder {
 }
 
 
-infix operator ** { }
-/// Power of
-func ** (radix: Int, power: Int) -> Int {
-  return Int(pow(Double(radix), Double(power)))
-}
-
-/// This encodes an integer according to the encoding rules
-/// defined in the HPACK spec.
+/// Encodes an integer according to the encoding rules defined in the HPACK spec
 func encodeInt(value: Int, prefixBits: Int) -> [UInt8] {
   let maxNumber = (2 ** prefixBits) - 1
 

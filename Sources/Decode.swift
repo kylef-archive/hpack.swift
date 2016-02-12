@@ -1,9 +1,14 @@
 enum DecoderError : ErrorType {
+  case IntegerEncoding
   case Unsupported
 }
 
 public class Decoder {
-  public init() {}
+  public let headerTable: HeaderTable
+
+  public init(headerTable: HeaderTable? = nil) {
+    self.headerTable = headerTable ?? HeaderTable()
+  }
 
   public func decode(data: [UInt8]) throws -> [Header] {
     var headers: [Header] = []
@@ -14,7 +19,9 @@ public class Decoder {
 
       if byte & 0b1000_0000 == 0b1000_0000 {
         // Indexed Header Field Representation
-        throw DecoderError.Unsupported
+        let (header, consumed) = try decodeIndexed(Array(data[index..<data.endIndex]))
+        headers.append(header)
+        index = index.advancedBy(consumed)
       } else if byte & 0b1100_0000 == 0b0100_0000 {
         // Literal Header Field with Incremental Indexing
         throw DecoderError.Unsupported
@@ -55,4 +62,54 @@ public class Decoder {
 
     return headers
   }
+
+  /// Decodes a header represented using the indexed representation
+  func decodeIndexed(bytes: [UInt8]) throws -> (header: Header, consumed: Int) {
+    let index = try decodeInt(bytes, prefixBits: 7)
+
+    if let header = headerTable[index.value] {
+      return (header, index.consumed)
+    }
+
+    // decode integer
+    // get header from index table
+    // return header + consumed
+    throw DecoderError.Unsupported
+  }
+}
+
+
+/// Decodes an integer according to the encoding rules defined in the HPACK spec
+func decodeInt(data: [UInt8], prefixBits: Int) throws -> (value: Int, consumed: Int) {
+  guard !data.isEmpty else { throw DecoderError.IntegerEncoding }
+
+  let maxNumber = (2 ** prefixBits) - 1
+  let mask = UInt8(0xFF >> (8 - prefixBits))
+  var index = 0
+
+  func multiple(index: Int) -> Int {
+    return 128 ** (index - 1)
+  }
+
+  var number = Int(data[index] & mask)
+
+  if number == maxNumber {
+    while true {
+      index += 1
+
+      if index >= data.count {
+        throw DecoderError.IntegerEncoding
+      }
+
+      let nextByte = Int(data[index])
+      if nextByte >= 128 {
+        number += (nextByte - 128) * multiple(index)
+      } else {
+        number += nextByte * multiple(index)
+        break
+      }
+    }
+  }
+
+  return (number, index + 1)
 }
