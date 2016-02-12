@@ -1,2 +1,3 @@
+testTable()
 testEncoder()
 testDecoder()
