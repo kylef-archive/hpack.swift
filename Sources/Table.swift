@@ -80,4 +80,17 @@ public struct HeaderTable {
       return nil
     }
   }
+
+  /// Searches the table for the entry specified by name and value
+  public func search(name name: String, value: String) -> Int? {
+    let entry = staticEntries.enumerate().filter { index, header in
+      header.name == name && header.value == value
+    }.first
+
+    if let entry = entry {
+      return entry.0 + 1
+    }
+
+    return nil
+  }
 }

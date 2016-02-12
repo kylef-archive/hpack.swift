@@ -12,7 +12,7 @@ func testTable() {
         try expect(table[100]).to.beNil()
       }
 
-      $0.it("can search for static entries") {
+      $0.it("can lookup for static entries") {
         let authority = table[1]
         try expect(authority?.name) == ":authority"
         try expect(authority?.value) == ""
@@ -20,6 +20,13 @@ func testTable() {
         let method = table[2]
         try expect(method?.name) == ":method"
         try expect(method?.value) == "GET"
+      }
+    }
+
+    $0.describe("searching") {
+      $0.it("can search for static entry") {
+        let index = table.search(name: ":method", value: "GET")
+        try expect(index) == 2
       }
     }
   }
