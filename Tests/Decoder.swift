@@ -39,6 +39,27 @@ func testDecoder() {
       try expect(headers[0].name) == "password"
       try expect(headers[0].value) == "secret"
     }
+
+    $0.describe("decoding literal header field with indexing") {
+      let path = "/sample/path"
+      let bytes: [UInt8] = [68, UInt8(path.utf8.count)] + path.utf8
+
+      $0.it("decodes the header") {
+        let decoder = Decoder()
+        let headers = try decoder.decode(bytes)
+
+        try expect(headers.count) == 1
+        try expect(headers[0].name) == ":path"
+        try expect(headers[0].value) == path
+      }
+
+      $0.it("adds entry to header table") {
+        let decoder = Decoder()
+        try decoder.decode(bytes)
+
+        try expect(decoder.headerTable.search(name: ":path", value: path)) == 62
+      }
+    }
   }
 
   // Decoding tests from HPACK Specification

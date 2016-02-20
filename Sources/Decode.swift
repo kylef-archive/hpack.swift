@@ -6,7 +6,7 @@ enum DecoderError : ErrorType {
 }
 
 public class Decoder {
-  public let headerTable: HeaderTable
+  public var headerTable: HeaderTable
 
   public init(headerTable: HeaderTable? = nil) {
     self.headerTable = headerTable ?? HeaderTable()
@@ -26,7 +26,11 @@ public class Decoder {
         index = index.advancedBy(consumed)
       } else if byte & 0b1100_0000 == 0b0100_0000 {
         // Literal Header Field with Incremental Indexing
-        throw DecoderError.Unsupported
+        let (header, consumed) = try decodeLiteral(Array(data[index..<data.endIndex]), prefix: 6)
+        headers.append(header)
+        index = index.advancedBy(consumed)
+
+        headerTable.add(name: header.name, value: header.value)
       } else if byte & 0b1111_0000 == 0b0000_0000 {
         // Literal Header Field without Indexing
         let (header, consumed) = try decodeLiteral(Array(data[index..<data.endIndex]), prefix: 4)
