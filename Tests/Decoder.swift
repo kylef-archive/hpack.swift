@@ -60,6 +60,60 @@ func testDecoder() {
         try expect(decoder.headerTable.search(name: ":path", value: path)) == 62
       }
     }
+
+    $0.it("can decode request examples") {
+      // Kindly borrowed from https://github.com/python-hyper/hpack/blob/62e595f9d6bf8acb1af7292650228b9fcf94e06e/test/test_hpack.py#L344
+
+      let firstBytes: [UInt8] = [130, 134, 132, 1, 15] + "www.example.com".utf8
+      let firstHeaders: [Header] = [
+        (":method", "GET"),
+        (":scheme", "http"),
+        (":path", "/"),
+        (":authority", "www.example.com"),
+      ]
+
+      let secondBytes: [UInt8] = [130, 134, 132, 1, 15] + "www.example.com".utf8 + [15, 9, 8] + "no-cache".utf8
+      let secondHeaders: [Header] = [
+        (":method", "GET"),
+        (":scheme", "http"),
+        (":path", "/"),
+        (":authority", "www.example.com"),
+        ("cache-control", "no-cache"),
+      ]
+
+      let hostname = "www.example.com".utf8
+      let customKey: [UInt8] = [10] + "custom-key".utf8
+      let customValue: [UInt8] = [12] + "custom-value".utf8
+
+      let thirdBytes: [UInt8] = [130, 135, 133, 1, 15] + hostname + [64] + customKey + customValue
+      let thirdHeaders: [Header] = [
+        (":method", "GET"),
+        (":scheme", "https"),
+        (":path", "/index.html"),
+        (":authority", "www.example.com"),
+        ("custom-key", "custom-value"),
+      ]
+
+      let decoder = Decoder()
+      let firstDecoded = try decoder.decode(firstBytes)
+      let secondDecoded = try decoder.decode(secondBytes)
+      let thirdDecoded = try decoder.decode(thirdBytes)
+
+      func compare(expected: [Header], _ actual: [Header]) throws {
+        try expect(actual.count) == expected.count
+
+        for (index, header) in actual.enumerate() {
+          try expect(header.name) == expected[index].name
+          try expect(header.value) == expected[index].value
+        }
+      }
+
+      try compare(firstHeaders, firstDecoded)
+      try compare(secondHeaders, secondDecoded)
+      try compare(thirdHeaders, thirdDecoded)
+
+      try expect(decoder.headerTable.search(name: "custom-key", value: "custom-value")) == 62
+    }
   }
 
   // Decoding tests from HPACK Specification

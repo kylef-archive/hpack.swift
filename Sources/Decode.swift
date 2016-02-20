@@ -1,6 +1,6 @@
 enum DecoderError : ErrorType {
   case IntegerEncoding
-  case InvalidTableIndex
+  case InvalidTableIndex(Int)
   case InvalidString
   case Unsupported
 }
@@ -62,22 +62,28 @@ public class Decoder {
       return (header, index.consumed)
     }
 
-    throw DecoderError.InvalidTableIndex
+    throw DecoderError.InvalidTableIndex(index.value)
   }
 
   func decodeLiteral(bytes: [UInt8], prefix: Int) throws -> (value: Header, consumed: Int) {
     let (index, consumed) = try decodeInt(bytes, prefixBits: prefix)
+    var byteIndex = bytes.startIndex.advancedBy(consumed)
 
     let name: String
 
-    if let header = headerTable[index] {
+    if index == 0 {
+      let result = try decodeString(Array(bytes[byteIndex ..< bytes.endIndex]))
+      name = result.value
+      byteIndex = byteIndex.advancedBy(result.consumed)
+    } else if let header = headerTable[index] {
       name = header.name
     } else {
-      throw DecoderError.InvalidTableIndex
+      throw DecoderError.InvalidTableIndex(index)
     }
 
-    let (value, valueConsumed) = try decodeString(Array(bytes[bytes.startIndex.advancedBy(consumed)..<bytes.endIndex]))
-    return ((name, value), consumed + valueConsumed)
+    let (value, valueConsumed) = try decodeString(Array(bytes[byteIndex ..< bytes.endIndex]))
+    byteIndex = byteIndex.advancedBy(valueConsumed)
+    return ((name, value), byteIndex)
   }
 
   func decodeString(bytes: [UInt8]) throws -> (value: String, consumed: Int) {
@@ -85,9 +91,12 @@ public class Decoder {
       throw DecoderError.Unsupported
     }
 
-    let length = Int(bytes[0])
-    let startIndex = bytes.startIndex.successor()
+    let (length, startIndex) = try decodeInt(bytes, prefixBits: 7)
     let endIndex = startIndex.advancedBy(length)
+
+    if startIndex + length > bytes.count {
+      throw DecoderError.InvalidString
+    }
 
     let bytes = (bytes[startIndex ..< endIndex] + [0]).map { CChar($0) }
     if let value = String.fromCString(bytes) {
