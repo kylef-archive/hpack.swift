@@ -94,12 +94,16 @@ public class Decoder {
     let (length, startIndex) = try decodeInt(bytes, prefixBits: 7)
     let endIndex = startIndex.advancedBy(length)
 
-    if startIndex + length > bytes.count {
+    if endIndex > bytes.count {
       throw DecoderError.InvalidString
     }
 
-    let bytes = (bytes[startIndex ..< endIndex] + [0]).map { CChar($0) }
-    if let value = String.fromCString(bytes) {
+    let bytes = (bytes[startIndex ..< endIndex] + [0])
+    if let byte = bytes.first where (byte & UInt8(0x80)) > 0 {
+      throw DecoderError.Unsupported  // Huffman encoding is unsupported
+    }
+    let characters = bytes.map { CChar($0) }
+    if let value = String.fromCString(characters) {
       return (value, endIndex)
     }
 

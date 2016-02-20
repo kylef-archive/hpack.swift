@@ -61,7 +61,7 @@ func testDecoder() {
       }
     }
 
-    $0.it("can decode request examples") {
+    $0.it("can decode request examples without huffman") {
       // Kindly borrowed from https://github.com/python-hyper/hpack/blob/62e595f9d6bf8acb1af7292650228b9fcf94e06e/test/test_hpack.py#L344
 
       let firstBytes: [UInt8] = [130, 134, 132, 1, 15] + "www.example.com".utf8
@@ -86,6 +86,78 @@ func testDecoder() {
       let customValue: [UInt8] = [12] + "custom-value".utf8
 
       let thirdBytes: [UInt8] = [130, 135, 133, 1, 15] + hostname + [64] + customKey + customValue
+      let thirdHeaders: [Header] = [
+        (":method", "GET"),
+        (":scheme", "https"),
+        (":path", "/index.html"),
+        (":authority", "www.example.com"),
+        ("custom-key", "custom-value"),
+      ]
+
+      let decoder = Decoder()
+      let firstDecoded = try decoder.decode(firstBytes)
+      let secondDecoded = try decoder.decode(secondBytes)
+      let thirdDecoded = try decoder.decode(thirdBytes)
+
+      func compare(expected: [Header], _ actual: [Header]) throws {
+        try expect(actual.count) == expected.count
+
+        for (index, header) in actual.enumerate() {
+          try expect(header.name) == expected[index].name
+          try expect(header.value) == expected[index].value
+        }
+      }
+
+      try compare(firstHeaders, firstDecoded)
+      try compare(secondHeaders, secondDecoded)
+      try compare(thirdHeaders, thirdDecoded)
+
+      try expect(decoder.headerTable.search(name: "custom-key", value: "custom-value")) == 62
+    }
+
+    $0.it("does not support decoding huffman") {
+      let bytes: [UInt8] = [
+        130, 134, 132, 1, 140, 241, 227, 194, 229, 242, 58, 107, 160,
+        171, 144, 244, 255
+      ]
+      try expect(try decoder.decode(bytes)).toThrow()
+    }
+
+    $0.xit("can decode request examples without huffman") {
+      // Kindly borrowed from https://github.com/python-hyper/hpack/blob/62e595f9d6bf8acb1af7292650228b9fcf94e06e/test/test_hpack.py#L394
+
+      let firstBytes: [UInt8] = [
+        130, 134, 132, 1, 140, 241, 227, 194, 229, 242, 58, 107, 160,
+        171, 144, 244, 255
+      ]
+      let firstHeaders: [Header] = [
+        (":method", "GET"),
+        (":scheme", "http"),
+        (":path", "/"),
+        (":authority", "www.example.com"),
+      ]
+
+      let secondBytes: [UInt8] = [
+        130, 134, 132, 1, 140, 241, 227, 194, 229, 242, 58, 107, 160, 171,
+        144, 244, 255, 15, 9, 134, 168, 235, 16, 100, 156, 191
+      ]
+      let secondHeaders: [Header] = [
+        (":method", "GET"),
+        (":scheme", "http"),
+        (":path", "/"),
+        (":authority", "www.example.com"),
+        ("cache-control", "no-cache"),
+      ]
+
+      let hostname = "www.example.com".utf8
+      let customKey: [UInt8] = [10] + "custom-key".utf8
+      let customValue: [UInt8] = [12] + "custom-value".utf8
+
+      let thirdBytes: [UInt8] = [
+        130, 135, 133, 1, 140, 241, 227, 194, 229, 242, 58, 107, 160,
+        171, 144, 244, 255, 64, 136, 37, 168, 73, 233, 91, 169, 125,
+        127, 137, 37, 168, 73, 233, 91, 184, 232, 180, 191
+      ]
       let thirdHeaders: [Header] = [
         (":method", "GET"),
         (":scheme", "https"),
