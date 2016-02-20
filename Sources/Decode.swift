@@ -8,6 +8,10 @@ enum DecoderError : ErrorType {
 public class Decoder {
   public var headerTable: HeaderTable
 
+  public var headerTableSize: Int {
+    return headerTable.maxSize
+  }
+
   public init(headerTable: HeaderTable? = nil) {
     self.headerTable = headerTable ?? HeaderTable()
   }
@@ -45,7 +49,9 @@ public class Decoder {
         index = index.advancedBy(1).advancedBy(nameEndIndex).advancedBy(valueEndIndex)
       } else if byte & 0b1110_0000 == 0b0010_0000 {
         // Dynamic Table Size Update
-        throw DecoderError.Unsupported
+        let (newSize, consumed) = try decodeInt(data, prefixBits: 5)
+        index = index.advancedBy(consumed)
+        headerTable.maxSize = newSize
       } else {
         throw DecoderError.Unsupported
       }

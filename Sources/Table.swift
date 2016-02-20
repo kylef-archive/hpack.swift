@@ -1,6 +1,18 @@
 /// Implements the combined static and dynamic header table
 /// See RFC7541 Section 2.3
 public struct HeaderTable {
+  /// Maximum size of dynamic table.
+  /// Default 4096 defined by RFC7541 Section 6.5.2
+  var maxSize = 4096 {
+    didSet {
+      if maxSize == 0 {
+        dynamicEntries = []
+      } else if dynamicEntries.count > maxSize {
+        dynamicEntries = Array(dynamicEntries[0 ..< maxSize])
+      }
+    }
+  }
+
   /// Constant list of static headers. See RFC7541 Section 2.3.1 A
   let staticEntries: [Header] = [
     (":authority", ""),

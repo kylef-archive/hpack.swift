@@ -6,6 +6,10 @@ func testDecoder() {
   describe("HPACK Decoder") {
     let decoder = Decoder()
 
+    $0.it("table header size default") {
+      try expect(decoder.headerTableSize) == 4096
+    }
+
     $0.it("can decode indexed header field") {
       let data: [UInt8] = [130]
 
@@ -113,6 +117,14 @@ func testDecoder() {
       try compare(thirdHeaders, thirdDecoded)
 
       try expect(decoder.headerTable.search(name: "custom-key", value: "custom-value")) == 62
+    }
+
+    $0.it("updates the maximum header size while decoding") {
+      let bytes: [UInt8] = [62]
+      let headers = try decoder.decode(bytes)
+
+      try expect(headers.isEmpty).to.beTrue()
+      try expect(decoder.headerTableSize) == 30
     }
 
     $0.it("does not support decoding huffman") {

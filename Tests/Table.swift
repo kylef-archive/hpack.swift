@@ -1,10 +1,31 @@
 import Spectre
-import hpack
+@testable import hpack
 
 
 func testTable() {
   describe("HeaderTable") {
     let table = HeaderTable()
+
+    $0.describe("maximum header size") {
+      $0.it("defauts to 4096") {
+        try expect(table.maxSize) == 4096
+      }
+
+      $0.it("resizes existing headers when changed") {
+        var table = HeaderTable()
+        table.add(name: "test", value: "test1")
+        table.add(name: "test", value: "test2")
+        table.add(name: "test", value: "test3")
+        table.add(name: "test", value: "test4")
+        table.add(name: "test", value: "test5")
+        table.maxSize = 2
+
+        try expect(table.dynamicEntries.count) == 2
+
+        table.maxSize = 0
+        try expect(table.dynamicEntries.count) == 0
+      }
+    }
 
     $0.describe("subscripting") {
       $0.it("returns nil for invalid entry") {
