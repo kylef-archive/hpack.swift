@@ -1,3 +1,4 @@
+/// HPACK Decoding Error
 enum DecoderError : ErrorType {
   case IntegerEncoding
   case InvalidTableIndex(Int)
@@ -5,17 +6,19 @@ enum DecoderError : ErrorType {
   case Unsupported
 }
 
-public class Decoder {
-  public var headerTable: HeaderTable
 
+/// HPACK Decoder
+public class Decoder {
+  var headerTable = HeaderTable()
+
+  /// Size of he HPACK header table
   public var headerTableSize: Int {
     return headerTable.maxSize
   }
 
-  public init(headerTable: HeaderTable? = nil) {
-    self.headerTable = headerTable ?? HeaderTable()
-  }
+  public init() {}
 
+  /// Takes an HPACK-encoded header block and decodes into an array of headers
   public func decode(data: [UInt8]) throws -> [Header] {
     var headers: [Header] = []
     var index = data.startIndex

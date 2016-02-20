@@ -1,5 +1,8 @@
+/// HPACK Encoder. Takes HTTP headers and encodes into HTTP/2 header blocks.
 public class Encoder {
-  public var headerTable: HeaderTable
+  var headerTable = HeaderTable()
+
+  /// Controls toe size of the HPACK header table
   public var headerTableSize: Int {
     get {
       return headerTable.maxSize
@@ -14,16 +17,16 @@ public class Encoder {
   }
   var tableHeaderChanges: [Int] = []
 
-  public init(headerTable: HeaderTable? = nil) {
-    self.headerTable = headerTable ?? HeaderTable()
-  }
+  public init() {}
 
   public typealias HeaderTuple = (name: String, value: String, sensitive: Bool)
 
+  /// Takes a set of headers and encodes them into a HPACK-encoded header block
   public func encode(headers: [Header]) -> [UInt8] {
     return encode(headers.map { name, value in (name, value, false) })
   }
 
+  /// Takes a set of headers and encodes them into a HPACK-encoded header block
   public func encode(headers: [HeaderTuple]) -> [UInt8] {
     return encodeHeaderTableChanges() + headers.map(encode).reduce([], combine: +)
   }

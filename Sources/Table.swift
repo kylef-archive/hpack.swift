@@ -1,6 +1,6 @@
 /// Implements the combined static and dynamic header table
 /// See RFC7541 Section 2.3
-public struct HeaderTable {
+struct HeaderTable {
   /// Maximum size of dynamic table.
   /// Default 4096 defined by RFC7541 Section 6.5.2
   var maxSize = 4096 {
@@ -80,9 +80,9 @@ public struct HeaderTable {
 
   var dynamicEntries: [Header] = []
 
-  public init() {}
+  init() {}
 
-  public subscript(index: Int) -> Header? {
+  subscript(index: Int) -> Header? {
     /// Returns the entry specified by index
     get {
       guard index > 0 else { return nil }
@@ -100,7 +100,7 @@ public struct HeaderTable {
   }
 
   /// Searches the table for the entry specified by name and value
-  public func search(name name: String, value: String) -> Int? {
+  func search(name name: String, value: String) -> Int? {
     let entry = staticEntries.enumerate().filter { index, header in
       header.name == name && header.value == value
     }.first
@@ -120,7 +120,8 @@ public struct HeaderTable {
     return nil
   }
 
-  public func search(name name: String) -> Int? {
+  /// Searches the table for an entry that matches by name
+  func search(name name: String) -> Int? {
     let entry = staticEntries.enumerate().filter { index, header in
       header.name == name
     }.first
@@ -140,7 +141,8 @@ public struct HeaderTable {
     return nil
   }
 
-  public mutating func add(name name: String, value: String) {
+  /// Adds a new entry to the table
+  mutating func add(name name: String, value: String) {
     dynamicEntries.append((name, value))
   }
 }

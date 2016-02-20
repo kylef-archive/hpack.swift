@@ -19,6 +19,19 @@ let bytes = try encoder.encode(headers)
 print(bytes)
 ```
 
+#### Secure headers
+
+You may also pass a secure parameter when encoding a header, which allows you
+to prevent the header from being added to the header table.
+
+```swift
+let bytes = try encoder.encode([
+  ("secret", "secret-key", true),
+])
+
+print(bytes)
+```
+
 ### Decoding a set of headers
 
 ```swift
