@@ -6,6 +6,28 @@ func testEncoder() {
   describe("HPACK Encoder") {
     let encoder = Encoder()
 
+    $0.describe("header table size") {
+      $0.it("allows updating table header size") {
+        let encoder = Encoder()
+        encoder.headerTableSize = 20
+
+        try expect(encoder.headerTableSize) == 20
+      }
+
+      $0.it("updates the header when encoding") {
+        let encoder = Encoder()
+        encoder.headerTableSize = 20
+        encoder.headerTableSize = 30
+        encoder.headerTableSize = 10
+
+        let bytes = encoder.encode([Header]())
+        try expect(bytes.count) == 3
+        try expect(bytes[0]) == 52
+        try expect(bytes[1]) == 62
+        try expect(bytes[2]) == 42
+      }
+    }
+
     $0.it("can encode header field from header table index") {
       let bytes = encoder.encode([(":method", "GET")])
       try expect(bytes.count) == 1
