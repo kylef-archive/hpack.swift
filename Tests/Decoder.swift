@@ -15,6 +15,16 @@ func testDecoder() {
       try expect(headers[0].value) == "GET"
     }
 
+    $0.it("can decode literal header field without indexing") {
+      let path = "/sample/path"
+      let data: [UInt8] = [4, UInt8(path.utf8.count)] + path.utf8
+
+      let headers = try decoder.decode(data)
+      try expect(headers.count) == 1
+      try expect(headers[0].name) == ":path"
+      try expect(headers[0].value) == path
+    }
+
     $0.it("can decode un-indexed literal header field without indexing") {
       let data: [UInt8] = [
         16,

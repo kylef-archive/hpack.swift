@@ -1,5 +1,7 @@
 enum DecoderError : ErrorType {
   case IntegerEncoding
+  case InvalidTableIndex
+  case InvalidString
   case Unsupported
 }
 
@@ -27,31 +29,16 @@ public class Decoder {
         throw DecoderError.Unsupported
       } else if byte & 0b1111_0000 == 0b0000_0000 {
         // Literal Header Field without Indexing
-        throw DecoderError.Unsupported
+        let (header, consumed) = try decodeLiteral(Array(data[index..<data.endIndex]), prefix: 4)
+        headers.append(header)
+        index = index.advancedBy(consumed)
       } else if byte & 0b1111_0000 == 0b0001_0000 {
         // Literal Header Field never Indexed
-        let nameLengthIndex = index.successor()
+        let (name, nameEndIndex) = try decodeString(Array(data[index + 1 ..< data.endIndex]))
+        let (value, valueEndIndex) = try decodeString(Array(data[(index + nameEndIndex + 1) ..< data.endIndex]))
+        headers.append((name, value))
 
-        let nameLength = Int(data[nameLengthIndex])
-        let nameStartIndex = nameLengthIndex.successor()
-        let nameEndIndex = nameStartIndex.advancedBy(nameLength)
-
-        let valueLengthIndex = nameEndIndex
-
-        let valueLength = Int(data[valueLengthIndex])
-        let valueStartIndex = valueLengthIndex.successor()
-        let valueEndIndex = valueStartIndex.advancedBy(valueLength)
-
-        let nameBytes = (data[nameStartIndex ..< nameEndIndex] + [0]).map { CChar($0) }
-        let valueBytes = (data[valueStartIndex ..< valueEndIndex] + [0]).map { CChar($0) }
-        let name = String.fromCString(nameBytes)
-        let value = String.fromCString(valueBytes)
-
-        if let name = name, value = value {
-          headers.append((name, value))
-        }
-
-        index = valueEndIndex
+        index = index.advancedBy(1).advancedBy(nameEndIndex).advancedBy(valueEndIndex)
       } else if byte & 0b1110_0000 == 0b0010_0000 {
         // Dynamic Table Size Update
         throw DecoderError.Unsupported
@@ -71,10 +58,39 @@ public class Decoder {
       return (header, index.consumed)
     }
 
-    // decode integer
-    // get header from index table
-    // return header + consumed
-    throw DecoderError.Unsupported
+    throw DecoderError.InvalidTableIndex
+  }
+
+  func decodeLiteral(bytes: [UInt8], prefix: Int) throws -> (value: Header, consumed: Int) {
+    let (index, consumed) = try decodeInt(bytes, prefixBits: prefix)
+
+    let name: String
+
+    if let header = headerTable[index] {
+      name = header.name
+    } else {
+      throw DecoderError.InvalidTableIndex
+    }
+
+    let (value, valueConsumed) = try decodeString(Array(bytes[bytes.startIndex.advancedBy(consumed)..<bytes.endIndex]))
+    return ((name, value), consumed + valueConsumed)
+  }
+
+  func decodeString(bytes: [UInt8]) throws -> (value: String, consumed: Int) {
+    if bytes.isEmpty {
+      throw DecoderError.Unsupported
+    }
+
+    let length = Int(bytes[0])
+    let startIndex = bytes.startIndex.successor()
+    let endIndex = startIndex.advancedBy(length)
+
+    let bytes = (bytes[startIndex ..< endIndex] + [0]).map { CChar($0) }
+    if let value = String.fromCString(bytes) {
+      return (value, endIndex)
+    }
+
+    throw DecoderError.InvalidString
   }
 }
 
