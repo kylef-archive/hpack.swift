@@ -66,6 +66,8 @@ public struct HeaderTable {
     ("www-authenticate", ""),
   ]
 
+  var dynamicEntries: [Header] = []
+
   public init() {}
 
   public subscript(index: Int) -> Header? {
@@ -75,6 +77,10 @@ public struct HeaderTable {
 
       if index <= staticEntries.count {
         return staticEntries[index - 1]
+      }
+
+      if index - staticEntries.count <= dynamicEntries.count {
+        return dynamicEntries[index - staticEntries.count - 1]
       }
 
       return nil
@@ -91,6 +97,38 @@ public struct HeaderTable {
       return entry.0 + 1
     }
 
+    let dynamicEntry = dynamicEntries.enumerate().filter { index, header in
+      header.name == name && header.value == value
+    }.first
+
+    if let entry = dynamicEntry {
+      return staticEntries.count + entry.0 + 1
+    }
+
     return nil
+  }
+
+  public func search(name name: String) -> Int? {
+    let entry = staticEntries.enumerate().filter { index, header in
+      header.name == name
+    }.first
+
+    if let entry = entry {
+      return entry.0 + 1
+    }
+
+    let dynamicEntry = dynamicEntries.enumerate().filter { index, header in
+      header.name == name
+    }.first
+
+    if let entry = dynamicEntry {
+      return staticEntries.count + entry.0 + 1
+    }
+
+    return nil
+  }
+
+  public mutating func add(name name: String, value: String) {
+    dynamicEntries.append((name, value))
   }
 }

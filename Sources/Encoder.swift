@@ -1,5 +1,5 @@
 public class Encoder {
-  public let headerTable: HeaderTable
+  public var headerTable: HeaderTable
 
   public init(headerTable: HeaderTable? = nil) {
     self.headerTable = headerTable ?? HeaderTable()
@@ -20,6 +20,16 @@ public class Encoder {
       return encodeIndexed(index)
     }
 
+    if let index = headerTable.search(name: name) {
+      let indexBit = sensitive ? indexNever : indexIncremental
+
+      if !sensitive {
+        headerTable.add(name: name, value: value)
+      }
+
+      return encodeIndexedLiteral(index, value: value, indexBit: indexBit)
+    }
+
     return encodeLiteral(name, value: value)
   }
 
@@ -36,6 +46,24 @@ public class Encoder {
     var bytes = encodeInt(index, prefixBits: 7)
     bytes[0] |= 0x80
     return bytes
+  }
+
+  let indexNever: UInt8 = 16
+  let indexIncremental: UInt8 = 68
+
+  func encodeIndexedLiteral(index: Int, value: String, indexBit: UInt8) -> [UInt8] {
+    var prefix: [UInt8]
+
+    if indexBit != indexIncremental {
+      prefix = encodeInt(index, prefixBits: 4)
+    } else {
+      prefix = encodeInt(index, prefixBits: 6)
+    }
+
+    prefix[0] |= indexBit
+
+    let valueLength = encodeInt(value.utf8.count, prefixBits: 7)
+    return prefix + valueLength + value.utf8
   }
 }
 

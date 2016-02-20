@@ -28,6 +28,43 @@ func testEncoder() {
         try expect(bytes[index]) == byte
       }
     }
+
+    $0.describe("encoding literal header field with indexing") {
+      let encoder = Encoder()
+      let path = "/sample/path"
+      let bytes = encoder.encode([(":path", path)])
+
+      $0.it("returns expected bytes") {
+        let expectedBytes: [UInt8] = [68, UInt8(path.utf8.count)] + path.utf8
+
+        try expect(bytes.count) == expectedBytes.count
+        for (index, byte) in expectedBytes.enumerate() {
+          try expect(bytes[index]) == byte
+        }
+      }
+
+      $0.it("adds entry to header table") {
+        try expect(encoder.headerTable.search(name: ":path", value: path)) == 62
+      }
+    }
+
+    $0.describe("encoding literal header field without indexing") {
+      let path = "/sample/path"
+      let bytes = encoder.encode([(":path", path, true)])
+
+      $0.it("returns expected bytes") {
+        let expectedBytes: [UInt8] = [20, UInt8(path.utf8.count)] + path.utf8
+
+        try expect(bytes.count) == expectedBytes.count
+        for (index, byte) in expectedBytes.enumerate() {
+          try expect(bytes[index]) == byte
+        }
+      }
+
+      $0.it("does not add entry to header table") {
+        try expect(encoder.headerTable.search(name: ":path", value: path)).to.beNil()
+      }
+    }
   }
 
   // Encoding tests from HPACK Specification
