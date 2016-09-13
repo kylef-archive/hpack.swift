@@ -2,7 +2,7 @@ import Spectre
 @testable import hpack
 
 
-func testTable() {
+public func testTable() {
   describe("HeaderTable") {
     let table = HeaderTable()
 

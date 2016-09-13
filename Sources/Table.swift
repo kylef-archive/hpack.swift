@@ -100,8 +100,8 @@ struct HeaderTable {
   }
 
   /// Searches the table for the entry specified by name and value
-  func search(name name: String, value: String) -> Int? {
-    let entry = staticEntries.enumerate().filter { index, header in
+  func search(name: String, value: String) -> Int? {
+    let entry = staticEntries.enumerated().filter { index, header in
       header.name == name && header.value == value
     }.first
 
@@ -109,7 +109,7 @@ struct HeaderTable {
       return entry.0 + 1
     }
 
-    let dynamicEntry = dynamicEntries.enumerate().filter { index, header in
+    let dynamicEntry = dynamicEntries.enumerated().filter { index, header in
       header.name == name && header.value == value
     }.first
 
@@ -121,8 +121,8 @@ struct HeaderTable {
   }
 
   /// Searches the table for an entry that matches by name
-  func search(name name: String) -> Int? {
-    let entry = staticEntries.enumerate().filter { index, header in
+  func search(name: String) -> Int? {
+    let entry = staticEntries.enumerated().filter { index, header in
       header.name == name
     }.first
 
@@ -130,7 +130,7 @@ struct HeaderTable {
       return entry.0 + 1
     }
 
-    let dynamicEntry = dynamicEntries.enumerate().filter { index, header in
+    let dynamicEntry = dynamicEntries.enumerated().filter { index, header in
       header.name == name
     }.first
 
@@ -142,7 +142,7 @@ struct HeaderTable {
   }
 
   /// Adds a new entry to the table
-  mutating func add(name name: String, value: String) {
+  mutating func add(name: String, value: String) {
     dynamicEntries.append((name, value))
   }
 }

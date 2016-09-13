@@ -2,7 +2,7 @@ import Spectre
 @testable import hpack
 
 
-func testEncoder() {
+public func testEncoder() {
   describe("HPACK Encoder") {
     let encoder = Encoder()
 
@@ -46,7 +46,7 @@ func testEncoder() {
       ]
 
       try expect(bytes.count) == expectedBytes.count
-      for (index, byte) in expectedBytes.enumerate() {
+      for (index, byte) in expectedBytes.enumerated() {
         try expect(bytes[index]) == byte
       }
     }
@@ -60,7 +60,7 @@ func testEncoder() {
         let expectedBytes: [UInt8] = [68, UInt8(path.utf8.count)] + path.utf8
 
         try expect(bytes.count) == expectedBytes.count
-        for (index, byte) in expectedBytes.enumerate() {
+        for (index, byte) in expectedBytes.enumerated() {
           try expect(bytes[index]) == byte
         }
       }
@@ -78,7 +78,7 @@ func testEncoder() {
         let expectedBytes: [UInt8] = [20, UInt8(path.utf8.count)] + path.utf8
 
         try expect(bytes.count) == expectedBytes.count
-        for (index, byte) in expectedBytes.enumerate() {
+        for (index, byte) in expectedBytes.enumerated() {
           try expect(bytes[index]) == byte
         }
       }

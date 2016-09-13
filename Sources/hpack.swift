@@ -8,7 +8,7 @@ import Darwin
 public typealias Header = (name: String, value: String)
 
 
-infix operator ** { }
+infix operator **
 /// Power of
 func ** (radix: Int, power: Int) -> Int {
   return Int(pow(Double(radix), Double(power)))

@@ -2,7 +2,7 @@ import Spectre
 @testable import hpack
 
 
-func testDecoder() {
+public func testDecoder() {
   describe("HPACK Decoder") {
     let decoder = Decoder()
 
@@ -103,10 +103,10 @@ func testDecoder() {
       let secondDecoded = try decoder.decode(secondBytes)
       let thirdDecoded = try decoder.decode(thirdBytes)
 
-      func compare(expected: [Header], _ actual: [Header]) throws {
+      func compare(_ expected: [Header], _ actual: [Header]) throws {
         try expect(actual.count) == expected.count
 
-        for (index, header) in actual.enumerate() {
+        for (index, header) in actual.enumerated() {
           try expect(header.name) == expected[index].name
           try expect(header.value) == expected[index].value
         }
@@ -183,10 +183,10 @@ func testDecoder() {
       let secondDecoded = try decoder.decode(secondBytes)
       let thirdDecoded = try decoder.decode(thirdBytes)
 
-      func compare(expected: [Header], _ actual: [Header]) throws {
+      func compare(_ expected: [Header], _ actual: [Header]) throws {
         try expect(actual.count) == expected.count
 
-        for (index, header) in actual.enumerate() {
+        for (index, header) in actual.enumerated() {
           try expect(header.name) == expected[index].name
           try expect(header.value) == expected[index].value
         }
